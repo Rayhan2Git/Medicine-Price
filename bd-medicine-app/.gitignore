@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.pyc
+
+# Build outputs
+*.apk
+*.aab
+
+# Mobile app build artifacts
+mobile/android/
+mobile/.expo/
+mobile/dist/
+
+# Python
+*.egg-info/
+.eggs/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+npm-debug.log*
+
+# Root level stray files (these are for parent project, not this repo)
+/package-lock.json
+/package.json
+/node_modules
