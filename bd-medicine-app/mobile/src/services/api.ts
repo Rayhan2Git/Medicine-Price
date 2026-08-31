@@ -1,4 +1,16 @@
-const API_BASE = "http://localhost:8000";
+import Constants from "expo-constants";
+
+const DEFAULT_API_BASE =
+  typeof process !== "undefined" && process.env?.API_BASE
+    ? process.env.API_BASE
+    : (Constants.expoConfig?.extra?.apiBase as string | undefined) ??
+      "http://10.0.2.2:8000";
+
+export let API_BASE = DEFAULT_API_BASE;
+
+export function setApiBase(url: string) {
+  API_BASE = url;
+}
 
 export async function searchMedicines(query: string, limit = 20) {
   const res = await fetch(`${API_BASE}/api/search?q=${encodeURIComponent(query)}&limit=${limit}`);
@@ -38,10 +50,11 @@ export async function uploadPrescription(file: { uri: string; type: string; name
     name: file.name,
   } as any);
 
+  // IMPORTANT: do NOT set Content-Type manually here. fetch must add the
+  // multipart boundary itself; setting it manually corrupts the request.
   const res = await fetch(`${API_BASE}/api/ocr/upload-and-parse`, {
     method: "POST",
     body: formData,
-    headers: { "Content-Type": "multipart/form-data" },
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Upload failed" }));

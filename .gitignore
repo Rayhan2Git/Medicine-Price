@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+*.apk
+*.aab
+*.tsbuildinfo
+webapp/dist/
+_site/
+
+# React Native / Expo
+mobile/android/
+mobile/.expo/
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+venv/
+
+# Editors
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

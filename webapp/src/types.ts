@@ -13,20 +13,6 @@ export interface Brand {
   generic_id?: number;
 }
 
-export const formatPrice = (price: number | null | undefined): string => {
-  if (price == null || Number.isNaN(price)) return "—";
-  return `৳${price.toFixed(2)}`;
-};
-
-export interface Generic {
-  id: number;
-  name: string;
-  name_bn?: string;
-  therapeutic_class?: string;
-  brand_count?: number;
-  actual_brand_count?: number;
-}
-
 export interface BrandDetail extends Brand {
   indications?: string;
   pharmacology?: string;
@@ -43,7 +29,7 @@ export interface SearchResult {
 }
 
 export interface AlternativesResponse {
-  generic: Generic;
+  generic: { id: number; name: string };
   brands: Brand[];
 }
 
@@ -54,7 +40,7 @@ export interface PrescriptionMedicine {
   suggested_generic: string;
   confidence: number;
   db_matches: Brand[];
-  cheapest?: Brand;
+  cheapest?: Brand | null;
 }
 
 export interface PrescriptionResult {
@@ -64,11 +50,8 @@ export interface PrescriptionResult {
   total_estimated_price: number;
 }
 
-export interface PrescriptionHistory {
-  id: string;
-  date: string;
-  thumbnailUri?: string;
-  ocrText: string;
-  medicines: PrescriptionMedicine[];
-  totalPrice: number;
+export interface Stats {
+  generics: number;
+  brands: number;
+  brands_with_price: number;
 }
