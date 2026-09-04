@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { PrescriptionMedicine } from "../types";
+import { PrescriptionMedicine, formatPrice } from "../types";
 
 interface Props {
   medicine: PrescriptionMedicine;
@@ -39,7 +39,7 @@ export default function PrescriptionItem({ medicine, onPress, onAlternativePress
         <View style={styles.priceSection}>
           <View style={styles.cheapestRow}>
             <Text style={styles.cheapestLabel}>Best Price:</Text>
-            <Text style={styles.cheapestPrice}>৳{medicine.cheapest.unit_price?.toFixed(2)}</Text>
+            <Text style={styles.cheapestPrice}>{formatPrice(medicine.cheapest.unit_price)}</Text>
             <Text style={styles.cheapestBrand}>{medicine.cheapest.name}</Text>
           </View>
           <TouchableOpacity
@@ -57,8 +57,9 @@ export default function PrescriptionItem({ medicine, onPress, onAlternativePress
         <TouchableOpacity
           style={styles.alternativeLink}
           onPress={() => {
-            const genericId = medicine.cheapest?.generic_id || medicine.db_matches[0]?.generic_id;
-            const genericName = medicine.suggested_generic || medicine.db_matches[0]?.generic_name;
+            const genericId = medicine.cheapest?.generic_id ?? medicine.db_matches[0]?.generic_id;
+            const genericName: string =
+              medicine.suggested_generic || medicine.db_matches[0]?.generic_name || "";
             if (genericId) onAlternativePress(genericId, genericName);
           }}
         >

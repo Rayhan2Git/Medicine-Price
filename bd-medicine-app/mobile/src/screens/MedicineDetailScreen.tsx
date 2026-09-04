@@ -9,7 +9,7 @@ import {
   Linking,
 } from "react-native";
 import { getMedicineDetail } from "../services/api";
-import { BrandDetail } from "../types";
+import { BrandDetail, formatPrice } from "../types";
 
 export default function MedicineDetailScreen({ route, navigation }: any) {
   const { brandId } = route.params;
@@ -59,22 +59,22 @@ export default function MedicineDetailScreen({ route, navigation }: any) {
 
       <View style={styles.priceCard}>
         <Text style={styles.sectionTitle}>Price</Text>
-        {medicine.unit_price && (
+        {medicine.unit_price != null && (
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Unit Price:</Text>
-            <Text style={styles.priceValue}>৳{medicine.unit_price.toFixed(2)}</Text>
+            <Text style={styles.priceValue}>{formatPrice(medicine.unit_price)}</Text>
           </View>
         )}
-        {medicine.strip_price && (
+        {medicine.strip_price != null && (
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Strip Price:</Text>
-            <Text style={styles.priceValue}>৳{medicine.strip_price.toFixed(2)}</Text>
+            <Text style={styles.priceValue}>{formatPrice(medicine.strip_price)}</Text>
           </View>
         )}
-        {medicine.box_price && (
+        {medicine.box_price != null && (
           <View style={styles.priceRow}>
             <Text style={styles.priceLabel}>Box Price:</Text>
-            <Text style={styles.priceValue}>৳{medicine.box_price.toFixed(2)}</Text>
+            <Text style={styles.priceValue}>{formatPrice(medicine.box_price)}</Text>
           </View>
         )}
       </View>

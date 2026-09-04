@@ -15,6 +15,9 @@ export default function PrescriptionUploadScreen({ navigation }: any) {
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [pickedMime, setPickedMime] = useState<string>("image/jpeg");
+  const [pickedName, setPickedName] = useState<string>("prescription.jpg");
+
   const pickImage = async (useCamera: boolean) => {
     const permFn = useCamera
       ? ImagePicker.requestCameraPermissionsAsync
@@ -31,13 +34,19 @@ export default function PrescriptionUploadScreen({ navigation }: any) {
       : ImagePicker.launchImageLibraryAsync;
 
     const result = await launchFn({
-      mediaTypes: ["images"],
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
       quality: 0.8,
       base64: false,
     });
 
     if (!result.canceled && result.assets[0]) {
-      setImage(result.assets[0].uri);
+      const asset = result.assets[0];
+      setImage(asset.uri);
+      // Use the real MIME from the picker, falling back to a sensible default.
+      const mime = asset.mimeType || "image/jpeg";
+      setPickedMime(mime);
+      const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+      setPickedName(`prescription.${ext}`);
     }
   };
 
@@ -47,8 +56,8 @@ export default function PrescriptionUploadScreen({ navigation }: any) {
     try {
       const result = await uploadPrescription({
         uri: image,
-        type: "image/jpeg",
-        name: "prescription.jpg",
+        type: pickedMime,
+        name: pickedName,
       });
       navigation.replace("PrescriptionResult", { result, thumbnailUri: image });
     } catch (e: any) {

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
-import { Brand } from "../types";
+import { Brand, formatPrice } from "../types";
 
 interface Props {
   brand: Brand;
@@ -35,7 +35,7 @@ export default function MedicineCard({ brand, onPress, compact }: Props) {
       </View>
       {brand.unit_price != null && (
         <View style={styles.priceContainer}>
-          <Text style={styles.price}>৳{brand.unit_price.toFixed(2)}</Text>
+          <Text style={styles.price}>{formatPrice(brand.unit_price)}</Text>
           <Text style={styles.unit}>/unit</Text>
         </View>
       )}

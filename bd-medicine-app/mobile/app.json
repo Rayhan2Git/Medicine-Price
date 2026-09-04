@@ -10,6 +10,9 @@
       "backgroundColor": "#2F5BA2"
     },
     "assetBundlePatterns": ["**/*"],
+    "extra": {
+      "apiBase": "http://10.0.2.2:8000"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.bdmedicine.price"
@@ -21,7 +24,6 @@
       "package": "com.bdmedicine.price"
     },
     "plugins": [
-      "expo-build-properties",
       [
         "expo-image-picker",
         {

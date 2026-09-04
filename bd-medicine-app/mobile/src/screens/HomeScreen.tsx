@@ -8,6 +8,7 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 import { getStats, searchMedicines } from "../services/api";
 import { getHistory } from "../storage/history";
 import { PrescriptionHistory } from "../types";
@@ -20,8 +21,13 @@ export default function HomeScreen({ navigation }: any) {
 
   useEffect(() => {
     getStats().then(setStats).catch(() => {});
-    getHistory().then(setHistory).catch(() => {});
   }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      getHistory().then(setHistory).catch(() => {});
+    }, []),
+  );
 
   const handleSearch = async () => {
     if (!query.trim()) return;

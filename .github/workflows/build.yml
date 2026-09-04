@@ -1,0 +1,126 @@
+name: Build webapp and APK
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------- WEB ----------
+  build-web:
+    name: Build & deploy webapp
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: webapp/package-lock.json
+
+      - name: Install webapp dependencies
+        working-directory: webapp
+        run: npm ci
+
+      - name: Build webapp
+        working-directory: webapp
+        run: npm run build
+
+      - name: Prepare Pages artifact
+        working-directory: webapp
+        run: |
+          mkdir -p ../_site
+          cp -r dist/. ../_site/
+          # SPA fallback for client-side routes
+          cp dist/index.html ../_site/404.html
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+      - name: Deploy to GitHub Pages
+        if: github.event_name != 'pull_request'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  # ---------- ANDROID APK ----------
+  # NOTE: paused. Kotlin 1.9.24 vs Compose Compiler 1.5.15 mismatch
+  # in expo-modules-core@2.2.3 is not yet resolved. Marked non-blocking
+  # so the web job's status is not masked by it. Remove `continue-on-error`
+  # when the APK is healthy again.
+  build-apk:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: bd-medicine-app/mobile/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install mobile dependencies
+        working-directory: bd-medicine-app/mobile
+        run: npm ci
+
+      - name: Run Expo prebuild
+        working-directory: bd-medicine-app/mobile
+        run: npx expo prebuild --platform android --clean
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build debug APK
+        working-directory: bd-medicine-app/mobile
+        run: |
+          set -o pipefail
+          cd android
+          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee /tmp/gradle-debug.log
+
+      - name: Upload gradle log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gradle-debug-log
+          path: /tmp/gradle-debug.log
+          if-no-files-found: warn
+
+      - name: Upload debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-debug
+          path: bd-medicine-app/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: warn
+
+      - name: Build release APK
+        if: github.event_name == 'push'
+        working-directory: bd-medicine-app/mobile
+        run: |
+          cd android
+          ./gradlew assembleRelease
+
+      - name: Upload release APK
+        if: github.event_name == 'push'
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-apk-release
+          path: bd-medicine-app/mobile/android/app/build/outputs/apk/release/app-release.apk
+          if-no-files-found: warn
