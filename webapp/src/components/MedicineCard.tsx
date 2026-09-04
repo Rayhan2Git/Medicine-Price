@@ -7,21 +7,24 @@ interface Props {
   compact?: boolean;
 }
 
-export default function MedicineCard({ brand, compact }: Props) {
+export default function MedicineCard({ brand }: Props) {
   return (
     <Link to={`/medicine/${brand.id}`} className="medicine-card-link">
-      <div className={`medicine-card ${compact ? "compact" : ""}`}>
-        <div className="info">
-          <div className="name">{brand.name}</div>
-          {brand.strength && <div className="strength">{brand.strength}</div>}
-          {!compact && brand.manufacturer && (
-            <div className="manufacturer">{brand.manufacturer}</div>
-          )}
-          {!compact && brand.generic_name && (
-            <div className="generic">Generic: {brand.generic_name}</div>
-          )}
+      <div className="medicine-card">
+        {brand.strength && (
+          <span className="strength">{brand.strength}</span>
+        )}
+        <div className="name">{brand.name}</div>
+        {brand.generic_name && (
+          <div className="generic">{brand.generic_name}</div>
+        )}
+        {brand.manufacturer && (
+          <div className="manufacturer">{brand.manufacturer}</div>
+        )}
+        <div className="price">
+          <span>{formatPrice(brand.unit_price)}</span>
+          <span className="unit">unit</span>
         </div>
-        <div className="price">{formatPrice(brand.unit_price)}</div>
       </div>
     </Link>
   );

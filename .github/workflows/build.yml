@@ -33,6 +33,17 @@ jobs:
         working-directory: webapp
         run: npm ci
 
+      - name: Generate static medicine data
+        # Rebuild webapp/public/data/*.json from the SQLite DB so the
+        # deployed static site can serve search & details without a backend.
+        # (If the DB is missing, the pre-committed JSON files are used.)
+        run: |
+          if [ -f bd-medicine-app/data/medicines.db ]; then
+            python3 webapp/scripts/build-data.py
+          else
+            echo "No medicines DB found; using pre-committed data/*.json"
+          fi
+
       - name: Build webapp
         working-directory: webapp
         run: npm run build

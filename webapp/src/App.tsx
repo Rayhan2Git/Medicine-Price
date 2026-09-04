@@ -11,12 +11,11 @@ function Header() {
   return (
     <header className="app-header">
       <NavLink to="/" className="brand-link">
-        💊 BD Medicine Price
+        <span className="brand-mark" aria-hidden>℞</span>
+        <span>BD Medicine Price</span>
       </NavLink>
       <nav>
-        <NavLink to="/" end>
-          Home
-        </NavLink>
+        <NavLink to="/" end>Home</NavLink>
         <NavLink to="/search">Search</NavLink>
         <NavLink to="/prescription">Prescription</NavLink>
       </nav>
@@ -53,7 +52,11 @@ export default function App() {
 function NotFound() {
   return (
     <div className="page">
-      <h2>Page not found</h2>
+      <div className="empty-state">
+        <div className="icon">404</div>
+        <h3>Page not found</h3>
+        <p>The page you're looking for doesn't exist.</p>
+      </div>
     </div>
   );
 }
