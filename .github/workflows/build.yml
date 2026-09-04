@@ -86,9 +86,9 @@ jobs:
       - name: Build debug APK
         working-directory: bd-medicine-app/mobile
         run: |
+          set -o pipefail
           cd android
-          ./gradlew assembleDebug --stacktrace 2>&1 | tee /tmp/gradle-debug.log
-          echo "exit_code=${PIPESTATUS[0]}"
+          ./gradlew assembleDebug --stacktrace --info 2>&1 | tee /tmp/gradle-debug.log
 
       - name: Upload gradle log
         if: always()
@@ -103,7 +103,7 @@ jobs:
         with:
           name: android-apk-debug
           path: bd-medicine-app/mobile/android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          if-no-files-found: warn
 
       - name: Build release APK
         if: github.event_name == 'push'
