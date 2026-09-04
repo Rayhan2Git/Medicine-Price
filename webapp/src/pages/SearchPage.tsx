@@ -4,6 +4,10 @@ import { searchMedicines } from "../api";
 import type { Brand } from "../types";
 import MedicineCard from "../components/MedicineCard";
 
+const SUGGESTIONS = [
+  "Napa", "Seclo", "Ace", "Monas", "Filmet", "Tufnil", "Maxpro", "Atova",
+];
+
 export default function SearchPage() {
   const [params, setParams] = useSearchParams();
   const initial = params.get("q") ?? "";
@@ -11,13 +15,15 @@ export default function SearchPage() {
   const [results, setResults] = useState<Brand[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [searched, setSearched] = useState(!!initial);
 
   useEffect(() => {
     if (!initial) return;
     let cancelled = false;
     setLoading(true);
     setError("");
-    searchMedicines(initial)
+    setSearched(true);
+    searchMedicines(initial, 30)
       .then((data) => {
         if (!cancelled) setResults(data.results);
       })
@@ -28,36 +34,94 @@ export default function SearchPage() {
     };
   }, [initial]);
 
-  // 350ms debounce on typing
   useEffect(() => {
     if (query === initial) return;
     const t = setTimeout(() => {
-      if (query.trim()) setParams({ q: query.trim() });
+      const q = query.trim();
+      if (q) setParams({ q });
     }, 350);
     return () => clearTimeout(t);
   }, [query, initial, setParams]);
 
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (q) setParams({ q });
+  };
+
   return (
     <div className="page">
-      <div className="search-bar">
+      <form onSubmit={onSubmit} className="search-wrap">
         <input
           type="search"
-          placeholder="Search medicines…"
+          className="search-input"
+          placeholder="Search by brand or generic — e.g. Napa, omeprazole, azithromycin…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
         />
-      </div>
-      {loading && <div className="state">Loading…</div>}
-      {error && <div className="state error">{error}</div>}
-      {!loading && !error && results.length === 0 && initial && (
-        <div className="state">No medicines found for "{initial}"</div>
+      </form>
+
+      {!searched && !loading && (
+        <>
+          <div className="search-meta">
+            <span>Try a common name</span>
+          </div>
+          <div className="quick-grid">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                className="quick-link"
+                onClick={() => setQuery(s)}
+                style={{ textAlign: "left", cursor: "pointer", border: "1px solid var(--border)" }}
+              >
+                <span className="qname">{s}</span>
+                <span className="qgeneric">search →</span>
+              </button>
+            ))}
+          </div>
+        </>
       )}
-      <div className="card-list">
-        {results.map((b) => (
-          <MedicineCard key={b.id} brand={b} />
-        ))}
-      </div>
+
+      {searched && (
+        <div className="search-meta">
+          {loading ? (
+            <span>Searching…</span>
+          ) : error ? (
+            <span style={{ color: "var(--danger)" }}>{error}</span>
+          ) : (
+            <span>
+              <span className="query-echo">"{initial}"</span> &nbsp;·&nbsp; {results.length}{" "}
+              {results.length === 1 ? "result" : "results"}
+            </span>
+          )}
+        </div>
+      )}
+
+      {loading && (
+        <div className="results-grid">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="skeleton" style={{ height: 140 }} />
+          ))}
+        </div>
+      )}
+
+      {!loading && !error && searched && results.length === 0 && (
+        <div className="empty-state">
+          <div className="icon">∅</div>
+          <h3>No matches</h3>
+          <p>Nothing found for "{initial}". Try a different spelling or generic name.</p>
+        </div>
+      )}
+
+      {!loading && !error && results.length > 0 && (
+        <div className="results-grid">
+          {results.map((b) => (
+            <MedicineCard key={b.id} brand={b} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

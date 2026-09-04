@@ -14,6 +14,8 @@ export interface Brand {
 }
 
 export interface BrandDetail extends Brand {
+  strip_size?: number | null;
+  box_size?: number | null;
   indications?: string;
   pharmacology?: string;
   dosage?: string;

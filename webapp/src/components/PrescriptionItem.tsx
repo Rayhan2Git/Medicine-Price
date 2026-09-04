@@ -7,12 +7,12 @@ interface Props {
 }
 
 export default function PrescriptionItem({ medicine }: Props) {
-  const confidence =
+  const confidenceClass =
     medicine.confidence >= 0.7
-      ? "#27ae60"
+      ? "high"
       : medicine.confidence >= 0.4
-        ? "#f39c12"
-        : "#e74c3c";
+        ? "med"
+        : "low";
 
   const genericId =
     medicine.cheapest?.generic_id ?? medicine.db_matches[0]?.generic_id;
@@ -21,7 +21,7 @@ export default function PrescriptionItem({ medicine }: Props) {
     <div className="rx-item">
       <div className="rx-item-header">
         <div className="rx-raw">{medicine.raw_name}</div>
-        <span className="confidence-badge" style={{ background: confidence }}>
+        <span className={`confidence-badge ${confidenceClass}`}>
           {Math.round(medicine.confidence * 100)}%
         </span>
       </div>

@@ -1,20 +1,24 @@
-import { useLocation, useNavigate } from "react-router-dom";
-import type { PrescriptionResult } from "../types";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { formatPrice } from "../api";
 import PrescriptionItem from "../components/PrescriptionItem";
+import type { PrescriptionResult } from "../types";
 
 export default function PrescriptionResultPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const result = (location.state as { result?: PrescriptionResult } | null)
-    ?.result;
+  const result = (location.state as { result?: PrescriptionResult } | null)?.result;
 
   if (!result) {
     return (
       <div className="page">
-        <p>No prescription data available.</p>
-        <button onClick={() => navigate("/prescription")}>
-          Upload again
-        </button>
+        <div className="empty-state">
+          <div className="icon">∅</div>
+          <h3>No result to show</h3>
+          <p>Upload a prescription first to see the analysis here.</p>
+          <Link to="/prescription" className="btn-primary" style={{ marginTop: 16 }}>
+            Upload a prescription
+          </Link>
+        </div>
       </div>
     );
   }
@@ -22,33 +26,36 @@ export default function PrescriptionResultPage() {
   return (
     <div className="page">
       <div className="summary-card">
-        <h2>Prescription Analysis</h2>
+        <div className="label">Prescription summary</div>
+        <h2>Read {result.medicines.length} medicine{result.medicines.length === 1 ? "" : "s"}</h2>
         <div className="summary-row">
           <div>
-            <div className="summary-value">{result.total_found}</div>
-            <div className="summary-label">Medicines</div>
+            <div className="summary-value">{result.medicines.length}</div>
+            <div className="summary-label">Items</div>
           </div>
           <div className="summary-divider" />
           <div>
             <div className="summary-value">
-              ৳{result.total_estimated_price.toFixed(2)}
+              {formatPrice(result.total_estimated_price)}
             </div>
-            <div className="summary-label">Est. Total</div>
+            <div className="summary-label">Estimated total</div>
           </div>
         </div>
       </div>
 
-      <h3 className="section-title">Detected Medicines</h3>
-      <div className="card-list">
-        {result.medicines.length === 0 ? (
-          <div className="state">
-            No medicines detected from this prescription.
-          </div>
-        ) : (
-          result.medicines.map((m, i) => (
-            <PrescriptionItem key={i} medicine={m} />
-          ))
-        )}
+      <h2 className="section-title">
+        Medicines
+        <span className="count">({result.medicines.length})</span>
+      </h2>
+
+      {result.medicines.map((m, i) => (
+        <PrescriptionItem key={i} medicine={m} />
+      ))}
+
+      <div style={{ display: "flex", justifyContent: "center", marginTop: 24 }}>
+        <button className="btn-secondary" onClick={() => navigate("/prescription")}>
+          ← Upload another
+        </button>
       </div>
     </div>
   );
