@@ -56,9 +56,14 @@ jobs:
         uses: actions/deploy-pages@v4
 
   # ---------- ANDROID APK ----------
+  # NOTE: paused. Kotlin 1.9.24 vs Compose Compiler 1.5.15 mismatch
+  # in expo-modules-core@2.2.3 is not yet resolved. Marked non-blocking
+  # so the web job's status is not masked by it. Remove `continue-on-error`
+  # when the APK is healthy again.
   build-apk:
     name: Build Android APK
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
