@@ -1,7 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { HashRouter } from "react-router-dom";
-import App from "./App";
+import App, { HashRouter } from "./App";
 import "./styles.css";
 
 // HashRouter is used so the SPA works regardless of the GitHub Pages
@@ -11,5 +10,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <HashRouter>
       <App />
     </HashRouter>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

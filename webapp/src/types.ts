@@ -1,3 +1,9 @@
+// Shared types for the webapp.
+//
+// Field names mirror the SQLite schema where possible. The DB has
+// `box_size` and `box_price` for pack/container info; the `strip_*`
+// columns are dead in the production DB and not used here.
+
 export interface Brand {
   id: number;
   name: string;
@@ -6,16 +12,14 @@ export interface Brand {
   dosage_form?: string;
   manufacturer?: string;
   unit_price?: number | null;
-  strip_price?: number | null;
-  box_price?: number | null;
   slug?: string;
   generic_name?: string;
   generic_id?: number;
 }
 
 export interface BrandDetail extends Brand {
-  strip_size?: number | null;
   box_size?: number | null;
+  box_price?: number | null;
   indications?: string;
   pharmacology?: string;
   dosage?: string;

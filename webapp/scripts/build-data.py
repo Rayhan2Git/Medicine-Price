@@ -68,6 +68,10 @@ def fetch_rows(db: sqlite3.Connection) -> tuple[list[dict], list[dict]]:
             "generic_id": rec["generic_id"],
         })
 
+        # Detail entry: everything the calculator + detail page need.
+        # Note: `strip_price` / `strip_size` columns are empty in the
+        # production DB (all pack info lives in box_*), so we omit them
+        # to slim the bundle.
         details.append({
             "id": rec["id"],
             "name": rec["name"],
@@ -77,9 +81,7 @@ def fetch_rows(db: sqlite3.Connection) -> tuple[list[dict], list[dict]]:
             "form": rec["dosage_form"] or "",
             "manufacturer": rec["manufacturer"] or "",
             "unit_price": rec["unit_price"],
-            "strip_price": rec["strip_price"],
             "box_price": rec["box_price"],
-            "strip_size": rec["strip_size"],
             "box_size": rec["box_size"],
         })
 

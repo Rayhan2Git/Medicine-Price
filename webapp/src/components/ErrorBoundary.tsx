@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from "react";
+import { Component, type ReactNode } from "react";
 
 interface Props {
   children: ReactNode;
@@ -15,17 +15,28 @@ export default class ErrorBoundary extends Component<Props, State> {
     return { error };
   }
 
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("App crashed:", error, info);
+  componentDidCatch() {
+    // intentionally no-op: the UI shows the error inline
   }
 
   render() {
     if (this.state.error) {
       return (
-        <div className="page error-page">
-          <h2>Something went wrong</h2>
-          <p>{this.state.error.message}</p>
-          <button onClick={() => location.reload()}>Reload</button>
+        <div className="page">
+          <div className="empty-state">
+            <div className="icon">⚠️</div>
+            <h3>Something went wrong</h3>
+            <p className="muted">
+              {this.state.error.message ?? "Unknown error"}
+            </p>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => window.location.reload()}
+            >
+              Reload
+            </button>
+          </div>
         </div>
       );
     }

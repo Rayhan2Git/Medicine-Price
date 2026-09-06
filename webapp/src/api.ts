@@ -5,5 +5,6 @@ export {
   getAlternatives,
   getStats,
   formatPrice,
+  isApiConfigured,
 } from "./dataClient";
 export { uploadPrescription } from "./upload";

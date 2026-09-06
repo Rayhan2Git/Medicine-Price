@@ -1,13 +1,17 @@
 /**
  * Client-side medicine data layer.
  *
- * Behavior:
- *   1. If a network API is reachable (`VITE_API_BASE` and `/api/stats` responds OK),
- *      use the network and ignore the bundled data.
- *   2. Otherwise, transparently use the bundled static data shipped at
- *      `/data/medicines-index.json` (search) and `/data/medicines-detail.json` (detail).
+ * Resolution order:
+ *   1. If the FastAPI backend is reachable (VITE_API_BASE set and /api/stats
+ *      responds), use the network and ignore the bundled data.
+ *   2. Otherwise fall back to the static bundle at `${BASE_URL}data/*.json`.
  *
- * This lets the deployed static webapp work without a backend.
+ * Notes:
+ *   - The DB schema has `box_size` and `box_price` for the pack/container
+ *     info. The `strip_*` columns are dead in the production DB; we ignore
+ *     them. The calculator uses `box_size` as the canonical pack size.
+ *   - For maximum reach on GitHub Pages (no backend), the same data is
+ *     pre-bundled into the static site at build time via scripts/build-data.py.
  */
 import type {
   Brand,
@@ -33,32 +37,41 @@ interface IndexRow {
 
 interface DetailRow extends IndexRow {
   unit_price: number | null;
-  strip_price: number | null;
   box_price: number | null;
-  strip_size: number | null;
   box_size: number | null;
 }
 
 let indexCache: IndexRow[] | null = null;
 let detailCache: DetailRow[] | null = null;
+let indexPromise: Promise<IndexRow[]> | null = null;
+let detailPromise: Promise<DetailRow[]> | null = null;
 
 async function loadIndex(): Promise<IndexRow[]> {
   if (indexCache) return indexCache;
-  // Use a relative URL so the fetch works on any subpath
-  // (e.g. /Medicine-Price/) where an absolute "/data/..." would
-  // resolve against the site root and 404.
-  const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-index.json`);
-  if (!res.ok) throw new Error("Failed to load medicine index");
-  indexCache = (await res.json()) as IndexRow[];
-  return indexCache;
+  if (!indexPromise) {
+    indexPromise = (async () => {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-index.json`);
+      if (!res.ok) throw new Error("Failed to load medicine index");
+      const json = (await res.json()) as IndexRow[];
+      indexCache = json;
+      return json;
+    })();
+  }
+  return indexPromise;
 }
 
 async function loadDetails(): Promise<DetailRow[]> {
   if (detailCache) return detailCache;
-  const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-detail.json`);
-  if (!res.ok) throw new Error("Failed to load medicine details");
-  detailCache = (await res.json()) as DetailRow[];
-  return detailCache;
+  if (!detailPromise) {
+    detailPromise = (async () => {
+      const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-detail.json`);
+      if (!res.ok) throw new Error("Failed to load medicine details");
+      const json = (await res.json()) as DetailRow[];
+      detailCache = json;
+      return json;
+    })();
+  }
+  return detailPromise;
 }
 
 function indexRowToBrand(r: IndexRow): Brand {
@@ -82,8 +95,8 @@ function detailRowToBrandDetail(r: DetailRow): BrandDetail {
     dosage_form: r.form,
     manufacturer: r.manufacturer,
     unit_price: r.unit_price,
-    strip_price: r.strip_price,
     box_price: r.box_price,
+    box_size: r.box_size,
     generic_name: r.generic,
     generic_id: r.generic_id,
   };
@@ -175,3 +188,5 @@ export const formatPrice = (price: number | null | undefined): string => {
   if (price == null) return "—";
   return `৳${price.toFixed(2)}`;
 };
+
+export const isApiConfigured = (): boolean => Boolean(API_BASE);

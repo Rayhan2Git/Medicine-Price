@@ -1,62 +1,163 @@
-import { Routes, Route, NavLink, useLocation } from "react-router-dom";
-import HomePage from "./pages/HomePage";
-import SearchPage from "./pages/SearchPage";
-import MedicineDetailPage from "./pages/MedicineDetailPage";
-import AlternativesPage from "./pages/AlternativesPage";
-import PrescriptionPage from "./pages/PrescriptionPage";
-import PrescriptionResultPage from "./pages/PrescriptionResultPage";
+import { useCallback, useEffect, useState } from "react";
+import { HashRouter, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { Toasts } from "./components/Toasts";
+import { LanguageToggle } from "./components/LanguageToggle";
+import CalculatorPage from "./pages/CalculatorPage";
+import PrescriptionPage from "./pages/PrescriptionPage";
+import CartSummaryPage from "./pages/CartSummaryPage";
+import { CartProvider, useCartContext, useToasts, type CartItem } from "./cart";
+import { pickStrings, type Lang } from "./i18n";
 
-function Header() {
+const LANG_KEY = "medicine-cart-lang";
+
+function readLang(): Lang {
+  try {
+    const v = window.localStorage.getItem(LANG_KEY);
+    if (v === "en" || v === "bn") return v;
+  } catch {
+    /* ignore */
+  }
+  return "en";
+}
+
+function Header({ lang, onLang }: { lang: Lang; onLang: (l: Lang) => void }) {
+  const t = pickStrings(lang);
+  const loc = useLocation();
+  const showHeader = loc.pathname !== "/summary";
+  if (!showHeader) return null;
   return (
     <header className="app-header">
-      <NavLink to="/" className="brand-link">
+      <NavLink to="/" className="brand-link" end>
         <span className="brand-mark" aria-hidden>℞</span>
         <span>BD Medicine Price</span>
       </NavLink>
-      <nav>
-        <NavLink to="/" end>Home</NavLink>
-        <NavLink to="/search">Search</NavLink>
-        <NavLink to="/prescription">Prescription</NavLink>
+      <nav className="app-nav">
+        <NavLink to="/" end>
+          {t.appName}
+        </NavLink>
+        <NavLink to="/prescription">{t.prescription}</NavLink>
       </nav>
+      <LanguageToggle lang={lang} onChange={onLang} />
     </header>
   );
 }
 
-export default function App() {
-  const location = useLocation();
-  const showHeader = !location.pathname.startsWith("/prescription/result");
+function NotFound({ lang }: { lang: Lang }) {
+  const t = pickStrings(lang);
+  return (
+    <div className="page">
+      <div className="empty-state">
+        <div className="icon">404</div>
+        <h3>{t.pageNotFound}</h3>
+      </div>
+    </div>
+  );
+}
+
+function AppShell() {
+  const [lang, setLangState] = useState<Lang>(readLang);
+  const cart = useCartContext();
+  const { toasts, push: pushToast, dismiss } = useToasts();
+
+  // Persist language
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(LANG_KEY, lang);
+    } catch {
+      /* ignore */
+    }
+    document.documentElement.lang = lang;
+  }, [lang]);
+
+  const onLang = useCallback((l: Lang) => setLangState(l), []);
+
+  // Toasts for the calculator page
+  const onToastAdd = useCallback(
+    (name: string) => pushToast(pickStrings(lang).addedToast(name)),
+    [lang, pushToast],
+  );
+  const onToastRemove = useCallback(
+    (name: string, undo: () => void) =>
+      pushToast(pickStrings(lang).removedToast(name), {
+        label: pickStrings(lang).undo,
+        onClick: undo,
+      }),
+    [lang, pushToast],
+  );
+  const onToastUpdate = useCallback(
+    (name: string) => pushToast(pickStrings(lang).updatedToast(name)),
+    [lang, pushToast],
+  );
+  const onToastClear = useCallback(
+    (undo: () => void) =>
+      pushToast(pickStrings(lang).clearedToast, {
+        label: pickStrings(lang).undo,
+        onClick: undo,
+      }),
+    [lang, pushToast],
+  );
+
+  // Add-many (used by PrescriptionPage after OCR)
+  const onAddMany = useCallback(
+    (items: CartItem[]) => {
+      let added = 0;
+      for (const it of items) {
+        if (cart.add(it)) added++;
+      }
+      return added;
+    },
+    [cart],
+  );
+
   return (
     <ErrorBoundary>
       <div className="app">
-        {showHeader && <Header />}
+        <Header lang={lang} onLang={onLang} />
         <main className="app-main">
           <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/search" element={<SearchPage />} />
-            <Route path="/medicine/:id" element={<MedicineDetailPage />} />
-            <Route path="/alternatives/:genericId" element={<AlternativesPage />} />
-            <Route path="/prescription" element={<PrescriptionPage />} />
             <Route
-              path="/prescription/result"
-              element={<PrescriptionResultPage />}
+              path="/"
+              element={
+                <CalculatorPage
+                  lang={lang}
+                  onToastAdd={onToastAdd}
+                  onToastRemove={onToastRemove}
+                  onToastUpdate={onToastUpdate}
+                  onToastClear={onToastClear}
+                />
+              }
             />
-            <Route path="*" element={<NotFound />} />
+            <Route
+              path="/prescription"
+              element={
+                <PrescriptionPage
+                  lang={lang}
+                  onAddMany={onAddMany}
+                  onToast={pushToast}
+                />
+              }
+            />
+            <Route
+              path="/summary"
+              element={<CartSummaryPage lang={lang} items={cart.items} />}
+            />
+            <Route path="*" element={<NotFound lang={lang} />} />
           </Routes>
         </main>
+        <Toasts toasts={toasts} onDismiss={dismiss} />
       </div>
     </ErrorBoundary>
   );
 }
 
-function NotFound() {
+export default function App() {
   return (
-    <div className="page">
-      <div className="empty-state">
-        <div className="icon">404</div>
-        <h3>Page not found</h3>
-        <p>The page you're looking for doesn't exist.</p>
-      </div>
-    </div>
+    <CartProvider>
+      <AppShell />
+    </CartProvider>
   );
 }
+
+// Re-export HashRouter wrapping for use in main.tsx
+export { HashRouter };
