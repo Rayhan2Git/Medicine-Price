@@ -44,7 +44,10 @@ let detailCache: DetailRow[] | null = null;
 
 async function loadIndex(): Promise<IndexRow[]> {
   if (indexCache) return indexCache;
-  const res = await fetch("/data/medicines-index.json");
+  // Use a relative URL so the fetch works on any subpath
+  // (e.g. /Medicine-Price/) where an absolute "/data/..." would
+  // resolve against the site root and 404.
+  const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-index.json`);
   if (!res.ok) throw new Error("Failed to load medicine index");
   indexCache = (await res.json()) as IndexRow[];
   return indexCache;
@@ -52,7 +55,7 @@ async function loadIndex(): Promise<IndexRow[]> {
 
 async function loadDetails(): Promise<DetailRow[]> {
   if (detailCache) return detailCache;
-  const res = await fetch("/data/medicines-detail.json");
+  const res = await fetch(`${import.meta.env.BASE_URL}data/medicines-detail.json`);
   if (!res.ok) throw new Error("Failed to load medicine details");
   detailCache = (await res.json()) as DetailRow[];
   return detailCache;
